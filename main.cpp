@@ -32,19 +32,29 @@ main (int args, char *argv[])
   //   }
 
   /* upload */
-  std::ifstream t_lf_img("C:\\Users\\lyyuli\\Pictures\\UploadTest.jpg");
+  std::string filename = "./test.png";
+  std::ifstream istrm (filename, std::ios::binary);
+  if (!istrm.is_open ())
+    {
+      std::cout << "Failed to open " << filename << std::endl;
+      return EXIT_FAILURE;
+    }
+
+  // std::ifstream t_lf_img("C:\\Users\\lyyuli\\Pictures\\UploadTest.jpg");
   std::stringstream buffer_lf_img;
-  buffer_lf_img << t_lf_img.rdbuf();
+  buffer_lf_img << istrm.rdbuf();
   httplib::MultipartFormDataItems items 
     {
       { "api", "SYNO.PhotoStation.File", "", "" },
       { "version", "1", "", "" },
       { "method", "uploadphoto", "", "" },
       { "dest_folder_path", "dev/sub_folder", "", "" },
-      { "duplicate", "rename", "", "" },
-      { "filename", "UploadTest.jpg", "", "" },
+      { "duplicate", "ignore", "", "" },
+      { "filename", "test1.jpg", "", "" },
       { "mtime", "1579384308", "", "" },
-      { "original", buffer_lf_img.str(), "UploadTest.jpg", "image/jpeg" }
+      { "original", buffer_lf_img.str(), "test1.jpg", "application/octet-stream" },
+      { "thumb_small", buffer_lf_img.str(), "sm1.jpg", "application/octet-stream" },
+      { "thumb_large", buffer_lf_img.str(), "lg1.jpg", "application/octet-stream" }
     };
   httplib::Headers headers = 
     {
