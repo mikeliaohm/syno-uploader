@@ -137,7 +137,7 @@ main (int args, char *argv[])
                 {
                   password.push_back (c);
                   cout << "*"; // display a star instead of the
-                                    // actual character
+                               // actual character
                 }
             }
 
@@ -170,12 +170,14 @@ main (int args, char *argv[])
 
   if (success)
     {
-      cout << "upload succeeded" << endl;
+      cout << "Upload succeeded." << endl;
     }
   else
     {
-      cout << "upload failed" << endl;
+      cout << "Upload failed." << endl;
     }
+
+  bool is_logout = SYNODER::logout (http_ctx);
 
   return 0;
 }
