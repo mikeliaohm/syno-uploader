@@ -1,0 +1,6 @@
+[submodule "external/httplib"]
+	path = external/httplib
+	url = https://github.com/yhirose/cpp-httplib.git
+[submodule "external/args"]
+	path = external/args
+	url = https://github.com/Taywee/args.git
