@@ -8,6 +8,14 @@ The repo makes use of [cpp-httplib](https://github.com/yhirose/cpp-httplib) for 
 git submodule update --init --recursive
 ```
 
+## Add another submoudule
+
+[args parser github](https://github.com/Taywee/args.git)
+
+```bash
+git submodule add https://github.com/Taywee/args.git
+```
+
 Afterwards, build the project by creating a build directory and build it. For example,
 
 ```bash
