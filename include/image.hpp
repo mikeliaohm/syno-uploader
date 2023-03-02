@@ -61,6 +61,5 @@ bool upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx);
 bool upload_video (struct HttpContext &http_ctx, struct UploadContext &ctx,
                    struct AdditionalContext &add_ctx);
 
-const std::vector<std::string> split (const std::string &str,
-                                      const char &delimiter);
+bool logout (struct HttpContext &http_ctx);
 }

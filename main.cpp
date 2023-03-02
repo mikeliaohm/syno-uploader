@@ -177,5 +177,7 @@ main (int args, char *argv[])
       std::cout << "upload failed" << std::endl;
     }
 
+  bool is_logout = SYNODER::logout (http_ctx);
+
   return 0;
 }

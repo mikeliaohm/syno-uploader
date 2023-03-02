@@ -189,6 +189,42 @@ SYNODER::upload_video (struct HttpContext &http_ctx,
     }
 }
 
+bool
+SYNODER::logout (struct HttpContext &http_ctx)
+{
+  httplib::Client cli (http_ctx.domain, http_ctx.port);
+
+  /* login */
+  httplib::Params params{ { "api", "SYNO.PhotoStation.Auth" },
+                          { "version", "1" },
+                          { "method", "logout" } };
+
+  httplib::Headers headers = {
+    { "cookie", "PHPSESSID=" + http_ctx.token },
+  };
+
+  if (auto res = cli.Post ("/photo/webapi/auth.php", headers, params))
+    {
+      if (res->status == 200)
+        {
+          std::cout << "logout successed!!" << std::endl;
+          return true;
+        }
+      else
+        {
+          auto err = res.error ();
+          std::cout << "Http error: " << httplib::to_string (err) << std::endl;
+          return false;
+        }
+    }
+  else
+    {
+      auto err = res.error ();
+      std::cout << "Http error: " << httplib::to_string (err) << std::endl;
+      return false;
+    }
+}
+
 const std::string
 convert_sstream (const std::string &file_path, std::stringstream &ss)
 {
