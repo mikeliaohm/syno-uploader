@@ -54,13 +54,13 @@ struct InMemoryUploadContext
 
 namespace SYNODER
 {
+/* Returns true if login credential is verified. */
 bool authenticate (struct HttpContext &http_ctx);
 
+/* Uploads image files and thumbnails instructed in CTX. */
 bool upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx);
 
+/* Uploads video files and thumbnails instructed in CTX and ADD_CTX.  */
 bool upload_video (struct HttpContext &http_ctx, struct UploadContext &ctx,
                    struct AdditionalContext &add_ctx);
-
-const std::vector<std::string> split (const std::string &str,
-                                      const char &delimiter);
 }
