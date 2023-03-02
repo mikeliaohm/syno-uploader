@@ -67,18 +67,18 @@ main (int args, char *argv[])
     }
   catch (args::Help)
     {
-      std::cout << parser;
+      cout << parser;
       return 0;
     }
   catch (args::ParseError e)
     {
-      std::cerr << e.what () << std::endl;
+      std::cerr << e.what () << endl;
       std::cerr << parser;
       return 1;
     }
   catch (args::ValidationError e)
     {
-      std::cerr << e.what () << std::endl;
+      std::cerr << e.what () << endl;
       std::cerr << parser;
       return 1;
     }
@@ -118,11 +118,11 @@ main (int args, char *argv[])
         {
           std::string username, password;
           char c;
-          std::cout << "Please enter your username" << std::endl;
+          cout << "Please enter your username" << endl;
           std::cin >> username;
 
-          // 讓密碼顯示*號
-          std::cout << "Please enter your password" << std::endl;
+          /* Display '*' symbols. */
+          cout << "Please enter your password" << endl;
           while ((c = _getch ()) != '\r') // '\r' means the Enter key
             {
               if (c == '\b') // backspace
@@ -130,13 +130,13 @@ main (int args, char *argv[])
                   if (!password.empty ())
                     {
                       password.pop_back ();
-                      std::cout << "\b \b"; // erase last character on screen
+                      cout << "\b \b"; // erase last character on screen
                     }
                 }
               else
                 {
                   password.push_back (c);
-                  std::cout << "*"; // display a star instead of the
+                  cout << "*"; // display a star instead of the
                                     // actual character
                 }
             }
@@ -170,11 +170,11 @@ main (int args, char *argv[])
 
   if (success)
     {
-      std::cout << "upload succeeded" << std::endl;
+      cout << "upload succeeded" << endl;
     }
   else
     {
-      std::cout << "upload failed" << std::endl;
+      cout << "upload failed" << endl;
     }
 
   return 0;

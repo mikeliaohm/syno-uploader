@@ -8,15 +8,23 @@ namespace fs = std::filesystem;
 
 #include "image.hpp"
 
+/* Returns true if PATH is a valid file path. */
 static bool is_valid_file_path (const std::string &path);
 
-const std::string convert_sstream (const std::string &file_path,
-                                   std::stringstream &);
+/* Converts a valid file in FILE_PATH into a stringstream.
+   Returns the filename if FILE_PATH is valid. */
+static const std::string convert_sstream (const std::string &file_path,
+                                          std::stringstream &);
 
-const std::string get_media_choice (MEDIA_TT &);
-const std::string get_overwrite_choice (OVERWRITE_CHOICE &);
-const void update_addtional_item (std::string key, std::string &path,
-                                  httplib::MultipartFormDataItems &items);
+/* Returns 'uploadvideo' or 'uploadphoto'. */
+static const std::string get_media_choice (MEDIA_TT &);
+
+/* Returns 'overwrite', 'rename', or 'ignore'. */
+static const std::string get_overwrite_choice (OVERWRITE_CHOICE &);
+
+/* Adds KEY, VALUE pair in the form data. */
+static const void add_form_data (std::string key, std::string &value,
+                                 httplib::MultipartFormDataItems &);
 
 bool
 SYNODER::authenticate (struct HttpContext &http_ctx)
@@ -40,26 +48,26 @@ SYNODER::authenticate (struct HttpContext &http_ctx)
             {
               std::string sid = regex_match[1].str ();
               http_ctx.token = sid;
-              std::cout << "login successed!!" << std::endl;
+              std::cout << "Login succeeded." << std::endl;
               return true;
             }
           else
             {
-              std::cout << "No match found." << std::endl;
+              std::cerr << "Cannot retrieve login token." << std::endl;
               return false;
             }
         }
       else
         {
           auto err = res.error ();
-          std::cout << "Http error: " << httplib::to_string (err) << std::endl;
+          std::cerr << "Http error: " << httplib::to_string (err) << std::endl;
           return false;
         }
     }
   else
     {
       auto err = res.error ();
-      std::cout << "Http error: " << httplib::to_string (err) << std::endl;
+      std::cerr << "Http error: " << httplib::to_string (err) << std::endl;
       return false;
     }
 }
@@ -78,8 +86,8 @@ SYNODER::upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx)
     { "original", orig_ss.str (), orig_filename, "application/octet-stream" },
   };
 
-  update_addtional_item ("thumb_large", ctx.thumb_lg_path, items);
-  update_addtional_item ("thumb_small", ctx.thumb_sm_path, items);
+  add_form_data ("thumb_large", ctx.thumb_lg_path, items);
+  add_form_data ("thumb_small", ctx.thumb_sm_path, items);
 
   httplib::Headers headers = {
     { "cookie", "PHPSESSID=" + http_ctx.token },
@@ -112,13 +120,13 @@ SYNODER::upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx)
       else
         {
           auto err = res.error ();
-          std::cout << "Http error: " << httplib::to_string (err) << std::endl;
+          std::cerr << "Http error: " << httplib::to_string (err) << std::endl;
           return false;
         }
     }
   else
     {
-      std::cout << res->body << std::endl;
+      std::cerr << res->body << std::endl;
       return false;
     }
 }
@@ -139,13 +147,13 @@ SYNODER::upload_video (struct HttpContext &http_ctx,
     { "original", orig_ss.str (), orig_filename, "application/octet-stream" },
   };
 
-  update_addtional_item ("high", add_ctx.high_res_path, items);
-  update_addtional_item ("medium", add_ctx.medium_res_path, items);
-  update_addtional_item ("low", add_ctx.low_res_path, items);
-  update_addtional_item ("mobile", add_ctx.mobile_res_path, items);
-  update_addtional_item ("iphone", add_ctx.iphone_res_path, items);
-  update_addtional_item ("android", add_ctx.android_res_path, items);
-  update_addtional_item ("flv", add_ctx.flv_res_path, items);
+  add_form_data ("high", add_ctx.high_res_path, items);
+  add_form_data ("medium", add_ctx.medium_res_path, items);
+  add_form_data ("low", add_ctx.low_res_path, items);
+  add_form_data ("mobile", add_ctx.mobile_res_path, items);
+  add_form_data ("iphone", add_ctx.iphone_res_path, items);
+  add_form_data ("android", add_ctx.android_res_path, items);
+  add_form_data ("flv", add_ctx.flv_res_path, items);
 
   httplib::Headers headers = {
     { "cookie", "PHPSESSID=" + http_ctx.token },
@@ -178,25 +186,25 @@ SYNODER::upload_video (struct HttpContext &http_ctx,
       else
         {
           auto err = res.error ();
-          std::cout << "Http error: " << httplib::to_string (err) << std::endl;
+          std::cerr << "Http error: " << httplib::to_string (err) << std::endl;
           return false;
         }
     }
   else
     {
-      std::cout << res->body << std::endl;
+      std::cerr << res->body << std::endl;
       return false;
     }
 }
 
-const std::string
+static const std::string
 convert_sstream (const std::string &file_path, std::stringstream &ss)
 {
   // call filesystem library in cpp std library
 
   if (!is_valid_file_path (file_path))
     {
-      std::cout << file_path << "not valid path" << std::endl;
+      std::cerr << file_path << " is not valid path." << std::endl;
       return {};
     }
   else
@@ -221,7 +229,7 @@ is_valid_file_path (const std::string &path)
     return false;
 }
 
-const std::string
+static const std::string
 get_media_choice (MEDIA_TT &tt)
 {
   std::string media_choice;
@@ -239,7 +247,7 @@ get_media_choice (MEDIA_TT &tt)
   return media_choice;
 }
 
-const std::string
+static const std::string
 get_overwrite_choice (OVERWRITE_CHOICE &choice)
 {
   std::string overwrite_choice;
@@ -260,15 +268,15 @@ get_overwrite_choice (OVERWRITE_CHOICE &choice)
   return overwrite_choice;
 }
 
-const void
-update_addtional_item (std::string key, std::string &path,
-                       httplib::MultipartFormDataItems &items)
+static const void
+add_form_data (std::string key, std::string &value,
+               httplib::MultipartFormDataItems &form_items)
 {
-  if (!path.empty ())
+  if (!value.empty ())
     {
       std::stringstream ss;
-      auto filename = convert_sstream (path, ss);
-      items.push_back (
+      auto filename = convert_sstream (value, ss);
+      form_items.push_back (
           { key, ss.str (), filename, "application/octet-stream" });
     }
 }
