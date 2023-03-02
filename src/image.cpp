@@ -182,7 +182,7 @@ SYNODER::upload_video (struct HttpContext &http_ctx,
     {
       if (res->status == 200)
         {
-          if (res->body.find ("success") != std::string::npos)
+          if (res->body.find ("true") != std::string::npos)
             return true;
           else
             return false;
