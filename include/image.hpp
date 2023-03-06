@@ -35,6 +35,7 @@ struct UploadContext
   std::string orig_path;
   std::string thumb_sm_path;
   std::string thumb_lg_path;
+  std::string filename;
 };
 
 struct AdditionalContext
