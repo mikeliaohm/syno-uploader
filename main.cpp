@@ -60,6 +60,12 @@ main (int args, char *argv[])
   args::ValueFlag<std::string> android (parser, "android", "The android flag",
                                         { "android" });
   args::ValueFlag<std::string> flv (parser, "flv", "The flv flag", { "flv" });
+  args::ValueFlag<std::string> filename (parser, "filename",
+                                         "The filename flag", { "filename" });
+  args::ValueFlag<std::string> username (parser, "username",
+                                         "The username flag", { "username" });
+  args::ValueFlag<std::string> password (parser, "password",
+                                         "The password flag", { "password" });
 
   try
     {
@@ -102,19 +108,26 @@ main (int args, char *argv[])
   ctx.dest = args::get (dest);
   ctx.media = media_tt;
   ctx.ow = ow_choice;
+  ctx.filename = args::get (filename);
   ctx.thumb_lg_path = args::get (thumb_large);
   ctx.thumb_sm_path = args::get (thumb_small);
 
   HttpContext http_ctx{};
   http_ctx.domain = args::get (domain);
   http_ctx.port = args::get (port);
+  http_ctx.username = args::get (username);
+  http_ctx.password = args::get (password);
+
   if (token)
     http_ctx.token = args::get (token);
   else
     {
       bool is_login = false;
 
-      do
+      if (username && password)
+        is_login = SYNODER::authenticate (http_ctx);
+
+      while (!is_login)
         {
           std::string username, password;
           char c;
@@ -137,7 +150,7 @@ main (int args, char *argv[])
                 {
                   password.push_back (c);
                   cout << "*"; // display a star instead of the
-                                    // actual character
+                               // actual character
                 }
             }
 
@@ -146,7 +159,6 @@ main (int args, char *argv[])
 
           is_login = SYNODER::authenticate (http_ctx);
         }
-      while (!is_login);
     }
 
   cout << "Uploading media files to Synology Photo Station." << endl;
@@ -170,12 +182,14 @@ main (int args, char *argv[])
 
   if (success)
     {
-      cout << "upload succeeded" << endl;
+      cout << "Upload succeeded." << endl;
     }
   else
     {
-      cout << "upload failed" << endl;
+      cout << "Upload failed." << endl;
     }
+
+  bool is_logout = SYNODER::logout (http_ctx);
 
   return 0;
 }

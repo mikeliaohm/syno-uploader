@@ -75,15 +75,21 @@ SYNODER::authenticate (struct HttpContext &http_ctx)
 bool
 SYNODER::upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx)
 {
+  std::string filename;
   std::stringstream orig_ss;
   auto orig_filename = convert_sstream (ctx.orig_path, orig_ss);
+
+  if (!ctx.filename.empty ())
+    filename = ctx.filename;
+  else
+    filename = orig_filename;
 
   std::string media_choice = get_media_choice (ctx.media);
   std::string overwrite_choice = get_overwrite_choice (ctx.ow);
 
   httplib::Client cli (http_ctx.domain, http_ctx.port);
   httplib::MultipartFormDataItems items{
-    { "original", orig_ss.str (), orig_filename, "application/octet-stream" },
+    { "original", orig_ss.str (), filename, "application/octet-stream" },
   };
 
   add_form_data ("thumb_large", ctx.thumb_lg_path, items);
@@ -105,7 +111,7 @@ SYNODER::upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx)
                              + overwrite_choice
                              + "&"
                                "filename="
-                             + orig_filename
+                             + filename
                              + "&"
                                "mtime=1579384308";
 
@@ -114,7 +120,10 @@ SYNODER::upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx)
       if (res->status == 200)
         {
           std::cout << res->body << std::endl;
-          return true;
+          if (res->body.find ("true") != std::string::npos)
+            return true;
+          else
+            return false;
         }
 
       else
@@ -136,15 +145,21 @@ SYNODER::upload_video (struct HttpContext &http_ctx,
                        struct UploadContext &upload_ctx,
                        struct AdditionalContext &add_ctx)
 {
+  std::string filename;
   std::stringstream orig_ss;
   auto orig_filename = convert_sstream (upload_ctx.orig_path, orig_ss);
+
+  if (!upload_ctx.filename.empty ())
+    filename = upload_ctx.filename;
+  else
+    filename = orig_filename;
 
   std::string media_choice = get_media_choice (upload_ctx.media);
   std::string overwrite_choice = get_overwrite_choice (upload_ctx.ow);
 
   httplib::Client cli (http_ctx.domain, http_ctx.port);
   httplib::MultipartFormDataItems items{
-    { "original", orig_ss.str (), orig_filename, "application/octet-stream" },
+    { "original", orig_ss.str (), filename, "application/octet-stream" },
   };
 
   add_form_data ("high", add_ctx.high_res_path, items);
@@ -171,7 +186,7 @@ SYNODER::upload_video (struct HttpContext &http_ctx,
                              + overwrite_choice
                              + "&"
                                "filename="
-                             + orig_filename
+                             + filename
                              + "&"
                                "mtime=1579384308";
 
@@ -179,8 +194,10 @@ SYNODER::upload_video (struct HttpContext &http_ctx,
     {
       if (res->status == 200)
         {
-          std::cout << res->body << std::endl;
-          return true;
+          if (res->body.find ("true") != std::string::npos)
+            return true;
+          else
+            return false;
         }
 
       else
@@ -193,6 +210,44 @@ SYNODER::upload_video (struct HttpContext &http_ctx,
   else
     {
       std::cerr << res->body << std::endl;
+      return false;
+    }
+}
+
+bool
+SYNODER::logout (struct HttpContext &http_ctx)
+{
+  httplib::Client cli (http_ctx.domain, http_ctx.port);
+  httplib::Params params{ { "api", "SYNO.PhotoStation.Auth" },
+                          { "version", "1" },
+                          { "method", "logout" } };
+  httplib::Headers headers = {
+    { "cookie", "PHPSESSID=" + http_ctx.token },
+  };
+
+  if (auto res = cli.Post ("/photo/webapi/auth.php", headers, params))
+    {
+      if (res->status == 200)
+        {
+          if (res->body.find ("true") != std::string::npos)
+            {
+              std::cout << "Logout succeeded." << std::endl;
+              return true;
+            }
+          else
+            return false;
+        }
+      else
+        {
+          auto err = res.error ();
+          std::cout << "Http error: " << httplib::to_string (err) << std::endl;
+          return false;
+        }
+    }
+  else
+    {
+      auto err = res.error ();
+      std::cout << "Http error: " << httplib::to_string (err) << std::endl;
       return false;
     }
 }

@@ -35,6 +35,7 @@ struct UploadContext
   std::string orig_path;
   std::string thumb_sm_path;
   std::string thumb_lg_path;
+  std::string filename;
 };
 
 struct AdditionalContext
@@ -63,4 +64,7 @@ bool upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx);
 /* Uploads video files and thumbnails instructed in CTX and ADD_CTX.  */
 bool upload_video (struct HttpContext &http_ctx, struct UploadContext &ctx,
                    struct AdditionalContext &add_ctx);
+
+/* Returns true if logout succeeds. */
+bool logout (struct HttpContext &http_ctx);
 }
