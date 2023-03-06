@@ -65,6 +65,6 @@ bool upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx);
 bool upload_video (struct HttpContext &http_ctx, struct UploadContext &ctx,
                    struct AdditionalContext &add_ctx);
 
-/* Returns true if logout response success is true. */
+/* Returns true if logout succeeds. */
 bool logout (struct HttpContext &http_ctx);
 }
