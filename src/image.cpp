@@ -4,6 +4,13 @@
 #include <iostream>
 #include <sstream>
 
+#ifdef _WIN32
+#include <conio.h>
+#else
+#include <termios.h>
+#include <unistd.h>
+#endif
+
 namespace fs = std::filesystem;
 
 #include "image.hpp"
@@ -334,4 +341,62 @@ add_form_data (std::string key, std::string &value,
       form_items.push_back (
           { key, ss.str (), filename, "application/octet-stream" });
     }
+}
+
+std::string
+SYNODER::read_password ()
+{
+  std::string password = "";
+  char c;
+  bool visible;
+
+  /* Display '*' symbols. */
+  std::cout << "Please enter your password" << std::endl;
+
+#ifdef _WIN32
+  visible = false;
+  while ((c = _getch ()) != '\r') // '\r' means the Enter key
+    {
+      if (c == '\b') // backspace
+        {
+          if (!password.empty ())
+            {
+              password.pop_back ();
+              std::cout << "\b \b"; // erase last character on screen
+            }
+        }
+      else
+        {
+          password.push_back (c);
+          std::cout << "*"; // display a star instead of the
+                            // actual character
+        }
+    }
+#else
+  visible = false;
+
+  termios oldt, newt;
+  tcgetattr (STDIN_FILENO, &oldt);
+  newt = oldt;
+  newt.c_lflag &= ~(ICANON | ECHO);
+  tcsetattr (STDIN_FILENO, TCSANOW, &newt);
+
+  while ((c = getchar ()) != '\n')
+    {
+      if (c == 127 && password.size () > 0)
+        {
+          password.pop_back ();
+          std::cout << "\b \b";
+        }
+      else if (isprint (c) && visible)
+        {
+          password += c;
+          std::cout << "*";
+        }
+    }
+
+  tcsetattr (STDIN_FILENO, TCSANOW, &oldt);
+#endif
+
+  return password;
 }

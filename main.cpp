@@ -1,5 +1,4 @@
 #include <args.hxx>
-#include <conio.h>
 #include <iostream>
 
 #include "image.hpp"
@@ -130,29 +129,10 @@ main (int args, char *argv[])
       while (!is_login)
         {
           std::string username, password;
-          char c;
           cout << "Please enter your username" << endl;
           std::cin >> username;
 
-          /* Display '*' symbols. */
-          cout << "Please enter your password" << endl;
-          while ((c = _getch ()) != '\r') // '\r' means the Enter key
-            {
-              if (c == '\b') // backspace
-                {
-                  if (!password.empty ())
-                    {
-                      password.pop_back ();
-                      cout << "\b \b"; // erase last character on screen
-                    }
-                }
-              else
-                {
-                  password.push_back (c);
-                  cout << "*"; // display a star instead of the
-                               // actual character
-                }
-            }
+          password = SYNODER::read_password();
 
           http_ctx.username = username;
           http_ctx.password = password;

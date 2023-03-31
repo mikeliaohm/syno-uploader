@@ -67,4 +67,7 @@ bool upload_video (struct HttpContext &http_ctx, struct UploadContext &ctx,
 
 /* Returns true if logout succeeds. */
 bool logout (struct HttpContext &http_ctx);
+
+/* display password as * and return value */
+std::string read_password();
 }
