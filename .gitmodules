@@ -4,6 +4,3 @@
 [submodule "external/args"]
 	path = external/args
 	url = https://github.com/Taywee/args.git
-[submodule "external/opencv"]
-	path = external/opencv
-	url = https://github.com/opencv/opencv.git
