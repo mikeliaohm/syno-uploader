@@ -14,6 +14,19 @@ This repo implements a C++ library to upload images and videos to Synology's Pho
 
 The repo makes use of [cpp-httplib](https://github.com/yhirose/cpp-httplib) for the http requests. It is added as a  git submodule in the `external/httplib` folder. To download the source code of the cpp-httplib library. Use the following command. The sample executable has another dependency [args parser github](https://github.com/Taywee/args.git) to parse invoking arguments of the executable.
 
+## Download opencv
+
+Download opencv 4.7.0 [link](https://opencv.org/releases/)
+
+Windows
+
+- Upzip to C, the path need to be `C:\opencv`, then CMakeList.txt can find it
+- Add value `C:\opencv\build\x64\vc16\bin` to PATH environment variables
+
+Mac
+
+- ...
+
 ```bash
 git submodule update --init --recursive
 ```
@@ -46,7 +59,8 @@ To use the libray, include the header `image.hpp`, which contains separate APIs 
   --dest [NAS folder] \     # NAS folder identifies the destination folder in 
                             # Photo Station
   --photo \                 # Upload the photo.
-  --rename
+  --rename \
+  --auto_thumb              # auto generate thumbnail.
 ```
 
 ## Known issues

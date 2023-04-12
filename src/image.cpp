@@ -414,6 +414,9 @@ auto_generate_thumbnail (std::string &path,
                 std::vector<int>{ cv::IMWRITE_JPEG_QUALITY, 100 });
   std::string binary_string_l (buffer_l.begin (), buffer_l.end ());
 
+  // cv::imwrite("small.jpg", resized_img_s); // create small.jpg
+  // cv::imwrite("large.jpg", resized_img_l); // create large.jpg
+
   form_items.push_back (
       { "thumb_small", binary_string_s, filename, "application/octet-stream" });
   form_items.push_back (
