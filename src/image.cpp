@@ -2,6 +2,7 @@
 #include <fstream>
 #include <httplib.h>
 #include <iostream>
+#include <opencv2/opencv.hpp>
 #include <sstream>
 
 namespace fs = std::filesystem;
@@ -25,6 +26,10 @@ static const std::string get_overwrite_choice (OVERWRITE_CHOICE &);
 /* Adds KEY, VALUE pair in the form data. */
 static const void add_form_data (std::string key, std::string &value,
                                  httplib::MultipartFormDataItems &);
+
+static const void auto_generate_thumbnail (std::string &path,
+                                           httplib::MultipartFormDataItems &,
+                                           std::string &filename);
 
 bool
 SYNODER::authenticate (struct HttpContext &http_ctx)
@@ -92,8 +97,15 @@ SYNODER::upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx)
     { "original", orig_ss.str (), filename, "application/octet-stream" },
   };
 
-  add_form_data ("thumb_large", ctx.thumb_lg_path, items);
-  add_form_data ("thumb_small", ctx.thumb_sm_path, items);
+  if (ctx.auto_thumb)
+    {
+      auto_generate_thumbnail (ctx.orig_path, items, filename);
+    }
+  else
+    {
+      add_form_data ("thumb_large", ctx.thumb_lg_path, items);
+      add_form_data ("thumb_small", ctx.thumb_sm_path, items);
+    }
 
   httplib::Headers headers = {
     { "cookie", "PHPSESSID=" + http_ctx.token },
@@ -334,4 +346,76 @@ add_form_data (std::string key, std::string &value,
       form_items.push_back (
           { key, ss.str (), filename, "application/octet-stream" });
     }
+}
+
+static const void
+auto_generate_thumbnail (std::string &path,
+                         httplib::MultipartFormDataItems &form_items,
+                         std::string &filename)
+{
+  std::cerr << "resizing!! " << std::endl;
+  cv::Mat image = cv::imread (path);
+  int height = image.rows;
+  int width = image.cols;
+  int height_s, width_s, height_l, width_l;
+
+  if (height <= 320 || width <= 320)
+    {
+      width_s = width;
+      height_s = height;
+      width_l = width;
+      height_l = height;
+    }
+  else if ((height > 320 && height <= 1280) || (width > 320 && width <= 1280))
+    {
+      width_l = width;
+      height_l = height;
+
+      if (height > width)
+        {
+          width_s = 320;
+          height_s = 320 * height / width;
+        }
+      else
+        {
+          height_s = 320;
+          width_s = 320 * width / height;
+        }
+    }
+  else
+    {
+      if (height > width)
+        {
+          width_s = 320;
+          height_s = 320 * height / width;
+          width_l = 1280;
+          height_l = 1280 * height / width;
+        }
+      else
+        {
+          height_s = 320;
+          width_s = 320 * width / height;
+          height_l = 1280;
+          width_l = 1280 * width / height;
+        }
+    }
+
+  cv::Mat resized_img_s;
+  cv::resize (image, resized_img_s, cv::Size (width_s, height_s));
+  cv::Mat resized_img_l;
+  cv::resize (image, resized_img_l, cv::Size (width_l, height_l));
+
+  std::vector<uchar> buffer_s;
+  cv::imencode (".jpg", resized_img_s, buffer_s,
+                std::vector<int>{ cv::IMWRITE_JPEG_QUALITY, 100 });
+  std::string binary_string_s (buffer_s.begin (), buffer_s.end ());
+  std::vector<uchar> buffer_l;
+  cv::imencode (".jpg", resized_img_l, buffer_l,
+                std::vector<int>{ cv::IMWRITE_JPEG_QUALITY, 100 });
+  std::string binary_string_l (buffer_l.begin (), buffer_l.end ());
+
+  form_items.push_back (
+      { "thumb_small", binary_string_s, filename, "application/octet-stream" });
+  form_items.push_back (
+      { "thumb_large", binary_string_l, filename, "application/octet-stream" });
 }

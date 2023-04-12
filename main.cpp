@@ -46,7 +46,7 @@ main (int args, char *argv[])
   args::ValueFlag<std::string> thumb_small (
       parser, "thumb_small", "The thumb_small flag", { 's', "small" });
   args::ValueFlag<std::string> thumb_large (
-      parser, "thumb_large", "The thumb_large flag", { 's', "large" });
+      parser, "thumb_large", "The thumb_large flag", { 'l', "large" });
   args::ValueFlag<std::string> high (parser, "high", "The high flag",
                                      { "high" });
   args::ValueFlag<std::string> medium (parser, "medium", "The medium flag",
@@ -66,6 +66,8 @@ main (int args, char *argv[])
                                          "The username flag", { "username" });
   args::ValueFlag<std::string> password (parser, "password",
                                          "The password flag", { "password" });
+  args::Flag auto_thumb (parser, "auto_thumb", "The auto_thumb flag",
+                         { "auto_thumb" });
 
   try
     {
@@ -111,6 +113,7 @@ main (int args, char *argv[])
   ctx.filename = args::get (filename);
   ctx.thumb_lg_path = args::get (thumb_large);
   ctx.thumb_sm_path = args::get (thumb_small);
+  ctx.auto_thumb = args::get (auto_thumb);
 
   HttpContext http_ctx{};
   http_ctx.domain = args::get (domain);

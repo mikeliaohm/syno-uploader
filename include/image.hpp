@@ -36,6 +36,7 @@ struct UploadContext
   std::string thumb_sm_path;
   std::string thumb_lg_path;
   std::string filename;
+  bool auto_thumb;
 };
 
 struct AdditionalContext
