@@ -1,10 +1,43 @@
 #include <args.hxx>
-#include <conio.h>
 #include <iostream>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <termios.h>
+#include <unistd.h>
+#endif
 
 #include "image.hpp"
 
 using std::cout, std::endl;
+
+void
+SetStdinEcho (bool enable = true)
+{
+#ifdef WIN32
+  HANDLE hStdin = GetStdHandle (STD_INPUT_HANDLE);
+  DWORD mode;
+  GetConsoleMode (hStdin, &mode);
+
+  if (!enable)
+    mode &= ~ENABLE_ECHO_INPUT;
+  else
+    mode |= ENABLE_ECHO_INPUT;
+
+  SetConsoleMode (hStdin, mode);
+
+#else
+  struct termios tty;
+  tcgetattr (STDIN_FILENO, &tty);
+  if (!enable)
+    tty.c_lflag &= ~ECHO;
+  else
+    tty.c_lflag |= ECHO;
+
+  (void)tcsetattr (STDIN_FILENO, TCSANOW, &tty);
+#endif
+}
 
 int
 main (int args, char *argv[])
@@ -133,29 +166,13 @@ main (int args, char *argv[])
       while (!is_login)
         {
           std::string username, password;
-          char c;
           cout << "Please enter your username" << endl;
           std::cin >> username;
 
-          /* Display '*' symbols. */
           cout << "Please enter your password" << endl;
-          while ((c = _getch ()) != '\r') // '\r' means the Enter key
-            {
-              if (c == '\b') // backspace
-                {
-                  if (!password.empty ())
-                    {
-                      password.pop_back ();
-                      cout << "\b \b"; // erase last character on screen
-                    }
-                }
-              else
-                {
-                  password.push_back (c);
-                  cout << "*"; // display a star instead of the
-                               // actual character
-                }
-            }
+          SetStdinEcho (false);
+          std::cin >> password;
+          SetStdinEcho (true);
 
           http_ctx.username = username;
           http_ctx.password = password;
