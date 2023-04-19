@@ -23,7 +23,7 @@ static const std::string get_media_choice (MEDIA_TT &);
 static const std::string get_overwrite_choice (OVERWRITE_CHOICE &);
 
 /* Adds KEY, VALUE pair in the form data. */
-static const void add_form_data (std::string key, std::string &value,
+static const bool add_form_data (std::string key, std::string &value,
                                  httplib::MultipartFormDataItems &);
 
 bool
@@ -92,8 +92,10 @@ SYNODER::upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx)
     { "original", orig_ss.str (), filename, "application/octet-stream" },
   };
 
-  add_form_data ("thumb_large", ctx.thumb_lg_path, items);
-  add_form_data ("thumb_small", ctx.thumb_sm_path, items);
+  if (!add_form_data ("thumb_large", ctx.thumb_lg_path, items))
+    return false;
+  if (!add_form_data ("thumb_small", ctx.thumb_sm_path, items))
+    return false;
 
   httplib::Headers headers = {
     { "cookie", "PHPSESSID=" + http_ctx.token },
@@ -162,13 +164,20 @@ SYNODER::upload_video (struct HttpContext &http_ctx,
     { "original", orig_ss.str (), filename, "application/octet-stream" },
   };
 
-  add_form_data ("high", add_ctx.high_res_path, items);
-  add_form_data ("medium", add_ctx.medium_res_path, items);
-  add_form_data ("low", add_ctx.low_res_path, items);
-  add_form_data ("mobile", add_ctx.mobile_res_path, items);
-  add_form_data ("iphone", add_ctx.iphone_res_path, items);
-  add_form_data ("android", add_ctx.android_res_path, items);
-  add_form_data ("flv", add_ctx.flv_res_path, items);
+  if (add_form_data ("high", add_ctx.high_res_path, items))
+    return false;
+  if (add_form_data ("medium", add_ctx.medium_res_path, items))
+    return false;
+  if (add_form_data ("low", add_ctx.low_res_path, items))
+    return false;
+  if (add_form_data ("mobile", add_ctx.mobile_res_path, items))
+    return false;
+  if (add_form_data ("iphone", add_ctx.iphone_res_path, items))
+    return false;
+  if (add_form_data ("android", add_ctx.android_res_path, items))
+    return false;
+  if (add_form_data ("flv", add_ctx.flv_res_path, items))
+    return false;
 
   httplib::Headers headers = {
     { "cookie", "PHPSESSID=" + http_ctx.token },
@@ -257,20 +266,12 @@ convert_sstream (const std::string &file_path, std::stringstream &ss)
 {
   // call filesystem library in cpp std library
 
-  if (!is_valid_file_path (file_path))
-    {
-      std::cerr << file_path << " is not valid path." << std::endl;
-      return {};
-    }
-  else
-    {
-      std::ifstream stream (file_path, std::ios::binary);
-      ss << stream.rdbuf ();
+  std::ifstream stream (file_path, std::ios::binary);
+  ss << stream.rdbuf ();
 
-      fs::path path = file_path;
-      std::string filename = path.filename ().string ();
-      return filename;
-    }
+  fs::path path = file_path;
+  std::string filename = path.filename ().string ();
+  return filename;
 }
 
 static bool
@@ -323,15 +324,26 @@ get_overwrite_choice (OVERWRITE_CHOICE &choice)
   return overwrite_choice;
 }
 
-static const void
+static const bool
 add_form_data (std::string key, std::string &value,
                httplib::MultipartFormDataItems &form_items)
 {
   if (!value.empty ())
     {
       std::stringstream ss;
-      auto filename = convert_sstream (value, ss);
-      form_items.push_back (
-          { key, ss.str (), filename, "application/octet-stream" });
+      if (is_valid_file_path (value))
+        {
+          auto filename = convert_sstream (value, ss);
+          form_items.push_back (
+              { key, ss.str (), filename, "application/octet-stream" });
+
+          return true;
+        }
+      else {
+        std::cerr << value << " is not valid path." << std::endl;
+        return false;
+      }
     }
+  else
+    return true;
 }
