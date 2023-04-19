@@ -12,26 +12,31 @@ This repo implements a C++ library to upload images and videos to Synology's Pho
 
 ## Installation and Dependencies
 
+### httplib and args:
+
 The repo makes use of [cpp-httplib](https://github.com/yhirose/cpp-httplib) for the http requests. It is added as a  git submodule in the `external/httplib` folder. To download the source code of the cpp-httplib library. Use the following command. The sample executable has another dependency [args parser github](https://github.com/Taywee/args.git) to parse invoking arguments of the executable.
 
-## Download opencv
-
-Download opencv 4.7.0 [link](https://opencv.org/releases/)
-
-Windows
-
-- Upzip to C, the path need to be `C:\opencv`, then CMakeList.txt can find it
-- Add value `C:\opencv\build\x64\vc16\bin` to PATH environment variables
-
-Mac
-
-- ...
-
 ```bash
+# add the packages into the project
 git submodule update --init --recursive
 ```
 
+### opencv
+
+Download opencv 4.7.0 [link](https://opencv.org/releases/)
+
+- **Windows:**
+
+1. Upzip to C, the path need to be `C:\opencv`, then CMakeList.txt can find it
+2. Add value `C:\opencv\build\x64\vc16\bin` to PATH environment variables
+
+- **Mac:**
+
+1. instructions to follow...
+
 Afterwards, build the project by creating a build directory and build it. For example,
+
+## Build and Test
 
 ```bash
 # In the source root
