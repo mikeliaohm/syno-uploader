@@ -3,6 +3,8 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+#pragma once
+
 #include <string>
 
 enum MEDIA_TT
@@ -66,6 +68,13 @@ bool upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx);
 bool upload_video (struct HttpContext &http_ctx, struct UploadContext &ctx,
                    struct AdditionalContext &add_ctx);
 
+const void auto_generate_thumbnail (std::string &path,
+                                          //  httplib::MultipartFormDataItems &,
+                                           std::string &filename);
+
 /* Returns true if logout succeeds. */
 bool logout (struct HttpContext &http_ctx);
+
+const void
+auto_generate_thumbnail (std::string &path, std::string &filename);
 }

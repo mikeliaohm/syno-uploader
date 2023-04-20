@@ -28,6 +28,7 @@ add_library(${LIB_SYNODER} src/image.cpp)
 
 # add the executable
 add_executable(${CMAKE_PROJECT_NAME} main.cpp)
+add_executable(OPENCV_CLIENT opencv_client.cpp)
 
 target_link_libraries(${LIB_SYNODER} PUBLIC 
   httplib::httplib
@@ -37,4 +38,8 @@ target_link_libraries(${LIB_SYNODER} PUBLIC
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE 
   ${LIB_SYNODER}
   args
+)
+
+target_link_libraries(OPENCV_CLIENT PRIVATE 
+  ${LIB_SYNODER}
 )

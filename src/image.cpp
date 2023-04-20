@@ -5,9 +5,10 @@
 #include <opencv2/opencv.hpp>
 #include <sstream>
 
+#include "image.hpp"
+
 namespace fs = std::filesystem;
 
-#include "image.hpp"
 
 /* Returns true if PATH is a valid file path. */
 static bool is_valid_file_path (const std::string &path);
@@ -27,7 +28,7 @@ static const std::string get_overwrite_choice (OVERWRITE_CHOICE &);
 static const bool add_form_data (std::string key, std::string &value,
                                  httplib::MultipartFormDataItems &);
 
-static const void auto_generate_thumbnail (std::string &path,
+static const void auto_generate_thumbnail1 (std::string &path,
                                            httplib::MultipartFormDataItems &,
                                            std::string &filename);
 
@@ -93,13 +94,15 @@ SYNODER::upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx)
   std::string overwrite_choice = get_overwrite_choice (ctx.ow);
 
   httplib::Client cli (http_ctx.domain, http_ctx.port);
+  cli.set_read_timeout(60);
+
   httplib::MultipartFormDataItems items{
     { "original", orig_ss.str (), filename, "application/octet-stream" },
   };
 
   if (ctx.auto_thumb)
     {
-      auto_generate_thumbnail (ctx.orig_path, items, filename);
+      auto_generate_thumbnail1 (ctx.orig_path, items, filename);
     }
   else
     {
@@ -361,8 +364,82 @@ add_form_data (std::string key, std::string &value,
     return true;
 }
 
+
+const void
+SYNODER::auto_generate_thumbnail (std::string &path, std::string &filename)
+{
+  std::cerr << "resizing!! " << std::endl;
+  cv::Mat image = cv::imread (path);
+  int height = image.rows;
+  int width = image.cols;
+  int height_s, width_s, height_l, width_l;
+
+  if (height <= 320 || width <= 320)
+    {
+      width_s = width;
+      height_s = height;
+      width_l = width;
+      height_l = height;
+    }
+  else if ((height > 320 && height <= 1280) || (width > 320 && width <= 1280))
+    {
+      width_l = width;
+      height_l = height;
+
+      if (height > width)
+        {
+          width_s = 320;
+          height_s = 320 * height / width;
+        }
+      else
+        {
+          height_s = 320;
+          width_s = 320 * width / height;
+        }
+    }
+  else
+    {
+      if (height > width)
+        {
+          width_s = 320;
+          height_s = 320 * height / width;
+          width_l = 1280;
+          height_l = 1280 * height / width;
+        }
+      else
+        {
+          height_s = 320;
+          width_s = 320 * width / height;
+          height_l = 1280;
+          width_l = 1280 * width / height;
+        }
+    }
+
+  cv::Mat resized_img_s;
+  cv::resize (image, resized_img_s, cv::Size (width_s, height_s));
+  cv::Mat resized_img_l;
+  cv::resize (image, resized_img_l, cv::Size (width_l, height_l));
+
+  std::vector<uchar> buffer_s;
+  cv::imencode (".jpg", resized_img_s, buffer_s,
+                std::vector<int>{ cv::IMWRITE_JPEG_QUALITY, 100 });
+  std::string binary_string_s (buffer_s.begin (), buffer_s.end ());
+  std::vector<uchar> buffer_l;
+  cv::imencode (".jpg", resized_img_l, buffer_l,
+                std::vector<int>{ cv::IMWRITE_JPEG_QUALITY, 100 });
+  std::string binary_string_l (buffer_l.begin (), buffer_l.end ());
+
+  cv::imwrite("small.jpg", resized_img_s); // create small.jpg
+  cv::imwrite("large.jpg", resized_img_l); // create large.jpg
+
+  // form_items.push_back ({ "thumb_small", std::move(binary_string_s), filename,
+  //                         "application/octet-stream" });
+  // form_items.push_back ({ "thumb_large", std::move(binary_string_l), filename,
+  //                         "application/octet-stream" });
+}
+
 static const void
-auto_generate_thumbnail (std::string &path,
+auto_generate_thumbnail1 (std::string &path,
                          httplib::MultipartFormDataItems &form_items,
                          std::string &filename)
 {
@@ -427,8 +504,8 @@ auto_generate_thumbnail (std::string &path,
                 std::vector<int>{ cv::IMWRITE_JPEG_QUALITY, 100 });
   std::string binary_string_l (buffer_l.begin (), buffer_l.end ());
 
-  // cv::imwrite("small.jpg", resized_img_s); // create small.jpg
-  // cv::imwrite("large.jpg", resized_img_l); // create large.jpg
+  cv::imwrite("small.jpg", resized_img_s); // create small.jpg
+  cv::imwrite("large.jpg", resized_img_l); // create large.jpg
 
   form_items.push_back ({ "thumb_small", binary_string_s, filename,
                           "application/octet-stream" });
