@@ -24,7 +24,7 @@ find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 include_directories(include)
-add_library(${LIB_SYNODER} src/image.cpp)
+add_library(${LIB_SYNODER} src/image.cpp include/image.hpp)
 
 # add the executable
 add_executable(${CMAKE_PROJECT_NAME} main.cpp)

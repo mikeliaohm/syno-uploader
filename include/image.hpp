@@ -5,7 +5,9 @@
 
 #pragma once
 
+#include <opencv2/core.hpp>
 #include <string>
+#include <vector>
 
 enum MEDIA_TT
 {
@@ -68,13 +70,9 @@ bool upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx);
 bool upload_video (struct HttpContext &http_ctx, struct UploadContext &ctx,
                    struct AdditionalContext &add_ctx);
 
-const void auto_generate_thumbnail (std::string &path,
-                                          //  httplib::MultipartFormDataItems &,
-                                           std::string &filename);
-
 /* Returns true if logout succeeds. */
 bool logout (struct HttpContext &http_ctx);
 
-const void
-auto_generate_thumbnail (std::string &path, std::string &filename);
+void auto_generate_thumbnail (std::string &path, std::vector<uchar> &buffer_s,
+                              std::vector<uchar> &buffer_l);
 }
