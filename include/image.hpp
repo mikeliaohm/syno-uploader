@@ -58,6 +58,8 @@ struct InMemoryUploadContext
 {
 };
 
+typedef unsigned char BYTE;
+
 namespace SYNODER
 {
 /* Returns true if login credential is verified. */
@@ -73,6 +75,10 @@ bool upload_video (struct HttpContext &http_ctx, struct UploadContext &ctx,
 /* Returns true if logout succeeds. */
 bool logout (struct HttpContext &http_ctx);
 
-void auto_generate_thumbnail (std::string &path, std::vector<uchar> &buffer_s,
+void auto_generate_thumbnail (cv::Mat &, std::vector<uchar> &buffer_s,
                               std::vector<uchar> &buffer_l);
+
+std::string get_heic_b64_data (std::string &path);
+
+std::vector<BYTE> base64_decode (std::string const &);
 }

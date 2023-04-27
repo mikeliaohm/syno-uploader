@@ -4,6 +4,7 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <sstream>
+#include <stdio.h>
 
 #include "image.hpp"
 
@@ -35,6 +36,16 @@ static const bool
 add_form_data_auto_thumb (std::string &path,
                           httplib::MultipartFormDataItems &form_items,
                           std::string filename);
+
+static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                        "abcdefghijklmnopqrstuvwxyz"
+                                        "0123456789+/";
+
+static inline bool
+is_base64 (BYTE c)
+{
+  return (isalnum (c) || (c == '+') || (c == '/'));
+}
 
 bool
 SYNODER::authenticate (struct HttpContext &http_ctx)
@@ -103,6 +114,7 @@ SYNODER::upload_image (struct HttpContext &http_ctx, struct UploadContext &ctx)
 
   if (ctx.auto_thumb)
     {
+      // std::string heic_path = "D:\\images\\heic\\C003.heic";
       if (!add_form_data_auto_thumb (ctx.orig_path, items, filename))
         return false;
     }
@@ -382,8 +394,23 @@ add_form_data_auto_thumb (std::string &path,
   std::vector<uchar> buffer_s;
   std::vector<uchar> buffer_l;
 
-  SYNODER::auto_generate_thumbnail (path, buffer_s, buffer_l);
+  std::filesystem::path file_path = path;
+  cv::Mat image;
 
+  if (file_path.extension () == ".heic")
+    {
+      // std::string heic_path = "D:\\images\\heic\\C003.heic";
+      std::string b64_str = SYNODER::get_heic_b64_data (path);
+      std::vector<BYTE> decoded_str = SYNODER::base64_decode (b64_str);
+      std::vector<char> im_vec (decoded_str.begin (), decoded_str.end ());
+      image = cv::imdecode (im_vec, cv::IMREAD_COLOR);
+    }
+  else
+    {
+      image = cv::imread (path);
+    }
+
+  SYNODER::auto_generate_thumbnail (image, buffer_s, buffer_l);
   std::string binary_string_s (buffer_s.begin (), buffer_s.end ());
   std::string binary_string_l (buffer_l.begin (), buffer_l.end ());
 
@@ -396,12 +423,10 @@ add_form_data_auto_thumb (std::string &path,
 }
 
 void
-SYNODER::auto_generate_thumbnail (std::string &path,
-                                  std::vector<uchar> &buffer_s,
+SYNODER::auto_generate_thumbnail (cv::Mat &image, std::vector<uchar> &buffer_s,
                                   std::vector<uchar> &buffer_l)
 {
   std::cerr << "resizing!! " << std::endl;
-  cv::Mat image = cv::imread (path);
   int height = image.rows;
   int width = image.cols;
   int height_s, width_s, height_l, width_l;
@@ -456,17 +481,84 @@ SYNODER::auto_generate_thumbnail (std::string &path,
                 std::vector<int>{ cv::IMWRITE_JPEG_QUALITY, 100 });
   cv::imencode (".jpg", resized_img_l, buffer_l,
                 std::vector<int>{ cv::IMWRITE_JPEG_QUALITY, 100 });
+}
 
-  // std::string binary_string_s (buffer_s.begin (), buffer_s.end ());
-  // std::string binary_string_l (buffer_l.begin (), buffer_l.end ());
+std::string
+SYNODER::get_heic_b64_data (std::string &path)
+{
+  char cmd[100];
+  std::string command = "python convert_heic.py -p " + path;
+  sprintf (cmd, command.c_str ());
 
-  // cv::imwrite("small.jpg", resized_img_s); // create small.jpg
-  // cv::imwrite("large.jpg", resized_img_l); // create large.jpg
+  FILE *pipe = _popen (cmd, "r");
+  if (!pipe)
+    {
+      std::cout << "Error: Failed to execute command." << std::endl;
+      return "Error: Failed to execute command.";
+    }
 
-  // form_items.push_back ({ "thumb_small", std::move(binary_string_s),
-  // filename,
-  //                         "application/octet-stream" });
-  // form_items.push_back ({ "thumb_large", std::move(binary_string_l),
-  // filename,
-  //                         "application/octet-stream" });
+  char buffer[128];
+  std::string result = "";
+  while (!feof (pipe))
+    {
+      if (fgets (buffer, 128, pipe) != NULL)
+        result += buffer;
+    }
+
+  _pclose (pipe);
+
+  return result;
+}
+
+std::vector<BYTE>
+SYNODER::base64_decode (std::string const &encoded_string)
+{
+  int in_len = encoded_string.size ();
+  int i = 0;
+  int j = 0;
+  int in_ = 0;
+  BYTE char_array_4[4], char_array_3[3];
+  std::vector<BYTE> ret;
+
+  while (in_len-- && (encoded_string[in_] != '=')
+         && is_base64 (encoded_string[in_]))
+    {
+      char_array_4[i++] = encoded_string[in_];
+      in_++;
+      if (i == 4)
+        {
+          for (i = 0; i < 4; i++)
+            char_array_4[i] = base64_chars.find (char_array_4[i]);
+
+          char_array_3[0]
+              = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+          char_array_3[1] = ((char_array_4[1] & 0xf) << 4)
+                            + ((char_array_4[2] & 0x3c) >> 2);
+          char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+
+          for (i = 0; (i < 3); i++)
+            ret.push_back (char_array_3[i]);
+          i = 0;
+        }
+    }
+
+  if (i)
+    {
+      for (j = i; j < 4; j++)
+        char_array_4[j] = 0;
+
+      for (j = 0; j < 4; j++)
+        char_array_4[j] = base64_chars.find (char_array_4[j]);
+
+      char_array_3[0]
+          = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+      char_array_3[1]
+          = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+      char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+
+      for (j = 0; (j < i - 1); j++)
+        ret.push_back (char_array_3[j]);
+    }
+
+  return ret;
 }
