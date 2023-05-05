@@ -490,7 +490,13 @@ SYNODER::get_heic_b64_data (std::string &path)
   std::string command = "python convert_heic.py -p " + path;
   sprintf (cmd, command.c_str ());
 
-  FILE *pipe = _popen (cmd, "r");
+  FILE *pipe;
+#ifdef _WIN32
+  pipe = _popen (cmd, "r");
+#else
+  pipe = popen (cmd, "r");
+#endif
+
   if (!pipe)
     {
       std::cout << "Error: Failed to execute command." << std::endl;
@@ -505,7 +511,11 @@ SYNODER::get_heic_b64_data (std::string &path)
         result += buffer;
     }
 
+#ifdef _WIN32
   _pclose (pipe);
+#else
+  pclose (pipe);
+#endif
 
   return result;
 }
