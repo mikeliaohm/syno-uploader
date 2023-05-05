@@ -32,7 +32,11 @@ Download opencv 4.7.0 [link](https://opencv.org/releases/)
 
 - **Mac:**
 
-1. instructions to follow...
+1. Upzip to /usr/local, the path need to be `/usr/local/opencv/build`, than CMakeList.txt can find it
+2. complie opencv, follow steps below or refer to [docs](https://docs.opencv.org/3.4/d0/db2/tutorial_macos_install.html)
+- `cd /usr/local/opencv && mkdir build && cd build`
+- `cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON ..`
+- `make -j7`
 
 Afterwards, build the project by creating a build directory and build it. For example,
 
