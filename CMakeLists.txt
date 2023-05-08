@@ -13,6 +13,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 if(WIN32)
     set(OpenCV_DIR "C:/opencv/build")
 else()
+    set(CMAKE_OSX_SYSROOT "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk") 
     set(OpenCV_DIR "/usr/local/opencv/build")
 endif()
 
@@ -22,6 +23,13 @@ add_subdirectory(external/args)
 # Find OpenCV
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
+
+# add_custom_target(
+#   opencv_build
+#   COMMAND cd /usr/local/opencv && ${CMAKE_COMMAND} -E make_directory build
+#   COMMAND cd /usr/local/opencv/build && ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON ..
+#   COMMAND cd /usr/local/opencv/build && ${CMAKE_COMMAND} --build . -- -j7
+# )
 
 include_directories(include)
 add_library(${LIB_SYNODER} src/image.cpp include/image.hpp)
